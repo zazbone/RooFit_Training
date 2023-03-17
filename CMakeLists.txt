@@ -10,43 +10,45 @@ else()
     cmake_policy(VERSION 3.25)
 endif()
 
+if(NOT CMAKE_BUILD_TYPE)
+  set(CMAKE_BUILD_TYPE Release)
+endif()
+
+set(TEST_ROOFIT_COMPILE_FLAGS -Werror -Wall -Wextra -pedantic)
+
+if(CMAKE_BUILD_TYPE STREQUAL "Release")
+  set(TEST_ROOFIT_COMPILE_FLAGS "${TEST_ROOFIT_COMPILE_FLAGS}" -O3)
+else()
+  set(TEST_ROOFIT_COMPILE_FLAGS "${TEST_ROOFIT_COMPILE_FLAGS}" -g)
+endif()
+
+if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+  set(TEST_ROOFIT_COMPILE_FLAGS "${TEST_ROOFIT_COMPILE_FLAGS}" -ferror-limit=5)
+elseif(CMAKE_CXX_COMPILER_ID MATCHES "GNU")
+  set(TEST_ROOFIT_COMPILE_FLAGS "${TEST_ROOFIT_COMPILE_FLAGS}" -fmax-errors=5)
+endif()
+
+
 ## Project setup
 project(TestRooFit
   LANGUAGES CXX
 )
-set(SRC "${CMAKE_CURRENT_SOURCE_DIR}/src")
-set(INC "${CMAKE_CURRENT_SOURCE_DIR}/include")
+set(TEST_ROOFIT_SRC "${CMAKE_CURRENT_SOURCE_DIR}/src")
+set(TEST_ROOFIT_INC "${CMAKE_CURRENT_SOURCE_DIR}/include")
 
 ## find and link dependancies
 find_package(ROOT 6.20 CONFIG REQUIRED)
-# If you want to support <6.20, add this line:
-# include("${ROOT_DIR}/modules/RootNewMacros.cmake")
-# However, it was moved and included by default in 6.201
 
 ## Make the libraries
 
 ## Make the executables
 add_executable(
-    main "${SRC}/main.cpp"
-    "${SRC}/sampling.cpp" "${SRC}/fitting.cpp"
-    "${INC}/sampling.hpp" "${INC}/fitting.hpp"
+    main "${TEST_ROOFIT_SRC}/main.cpp"
+    "${TEST_ROOFIT_SRC}/sampling.cpp" "${TEST_ROOFIT_SRC}/fitting.cpp"
+    "${TEST_ROOFIT_INC}/sampling.hpp" "${TEST_ROOFIT_INC}/fitting.hpp"
     )
-
-target_include_directories(main PRIVATE "${INC}")
-
-target_compile_options(main PRIVATE -Werror -Wall -Wextra -fmax-errors=5)
-
-target_link_libraries(main PUBLIC ROOT::RooFit ROOT::RooStats ROOT::Core)
-
-## cmake and build flags 
-set(CMAKE_CXX_STANDARD 17 CACHE STRING "C++ standard to use")
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_EXTENSIONS OFF)
-set(CMAKE_PLATFORM_INDEPENDENT_CODE ON)
-
-if(NOT CMAKE_BUILD_TYPE)
-  set(CMAKE_BUILD_TYPE Release)
-endif()
-
-set(CMAKE_CXX_FLAGS_DEBUG "-g")
-set(CMAKE_CXX_FLAGS_RELEASE "-O3")
+target_include_directories(main PRIVATE "${TEST_ROOFIT_INC}")
+target_link_libraries(main PRIVATE ROOT::RooFit ROOT::RooStats ROOT::Core)
+target_compile_options(main PRIVATE "${TEST_ROOFIT_COMPILE_FLAGS}")
+target_compile_features(main PUBLIC cxx_std_17)
+set_target_properties(main PROPERTIES CXX_EXTENSIONS OFF)
