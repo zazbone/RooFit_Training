@@ -1,6 +1,6 @@
-/build
+build*/
 .vscode/
+.cache/
 *.root
 *.jpg
 *.png
-
